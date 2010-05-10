@@ -286,7 +286,8 @@ macro( ocaml_get_dependencies target srcfile dependencies )
                     get_filename_component( depsrcname ${depsrc} NAME_WE ) # drop extension in case
                     if( dep STREQUAL ${depsrcname} )
                         #message( STATUS "   Found ${depsrcname} among the sources of ${tgtdep}." )
-                        set( location "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/${tgtdep}.dir" )
+                        get_target_property( tgtdir ${tgtdep} OBJECT_DIRECTORY )
+                        set( location "${tgtdir}" )
                         # modify dep_has_intf
                         get_target_property( depsrcdir ${tgtdep} SOURCE_DIRECTORY )
                         if( EXISTS "${depsrcdir}/${depsrcname}.mli" )
@@ -316,7 +317,6 @@ macro( ocaml_get_dependencies target srcfile dependencies )
             if( dep_has_intf )
                 list( APPEND ${dependencies}
                     "${location}/${dep}.cmi"
-                    "${location}/${dep}.cmx"
                     )
             else()
                 list( APPEND ${dependencies}
@@ -510,14 +510,21 @@ macro( ocaml_add_archives target )
     foreach( pkg ${OCAML_${target}_TARGET_TRANSPKGS} )
         list( APPEND package_flags -package ${pkg} )
     endforeach()
-    ### TODO: add dependency and link in each clib?
-    unset( clibs )
+
+    unset( clinkflags )
     foreach( lib ${OCAML_${target}_TARGET_TRANSLIBS} )
         get_target_property( kind ${lib} KIND )
         if( kind STREQUAL "CLIB" )
             #message( STATUS "   clib: ${lib}" )
+            get_target_property( objdir ${lib} OBJECT_DIRECTORY )
+            list( APPEND clinkflags -ccopt -L${objdir} )
+            get_target_property( clibs ${lib} LINK_TARGETS )
+            foreach( clib ${clibs} )
+                list( APPEND clinkflags -cclib -l${clib} )
+            endforeach()
         endif()
     endforeach()
+    #message( STATUS "   clinkflags: ${clinkflags}" )
 
     # {{{2 cma archive
     set( cmaoutput "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir/${target}.cma" )
@@ -527,6 +534,7 @@ macro( ocaml_add_archives target )
             ${package_flags}
             ${objnames}
             ${cmonames}
+            ${clinkflags}
 
         DEPENDS ${objnames} ${cmonames}
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
@@ -537,6 +545,7 @@ macro( ocaml_add_archives target )
         OUTPUT ${cmaoutput}
         OBJS "${cmonames}"
         CMA ${cmaoutput}
+        CMXA ""
         )
 
     # {{{2 cmx archive
@@ -548,6 +557,7 @@ macro( ocaml_add_archives target )
             ${package_flags}
             ${objnames}
             ${cmxnames}
+            ${clinkflags}
 
         DEPENDS ${objnames} ${cmxnames}
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
@@ -557,6 +567,7 @@ macro( ocaml_add_archives target )
     set_target_properties( ${target}.cmxa PROPERTIES
         OUTPUT "${cmxoutput};${liboutput}"
         OBJS "${cmxnames}"
+        CMA ""
         CMXA "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir/${target}.cmxa"
         )
 
@@ -743,40 +754,74 @@ macro( ocaml_add_exe target )
     foreach( idir ${OCAML_${target}_INCLUDE_DIRS} )
         list( APPEND include_flags -I ${idir} )
     endforeach()
-    ##message( STATUS "   ${srcfile} include_flags:
-    #    ${include_flags}" )
+    #message( STATUS "   ${target} include_flags: ${include_flags}" )
 
-    # {{{2 collect cma and cmxa
+    # {{{2 collect cma, cmxa and libs
     unset( cmanames )
     unset( cmatargets )
     unset( cmxanames )
     unset( cmxatargets )
+    unset( clibnames )
+    unset( clibtargets )
     foreach( deplib ${OCAML_${target}_TARGET_DEPLIBS} )
         #message( STATUS "   looking up libs for ${deplib}" )
-        get_target_property( cma ${deplib}.cma CMA )
-        get_target_property( cmxa ${deplib}.cmxa CMXA )
-        #message( STATUS "   ${deplib} cma: ${cma}" )
-        #message( STATUS "   ${deplib} cmxa: ${cmxa}" )
-        list( APPEND cmanames ${cma} )
-        list( APPEND cmatargets ${deplib}.cma )
-        list( APPEND cmxanames ${cmxa} )
-        list( APPEND cmxatargets ${deplib}.cmxa )
+        get_target_property( archives ${deplib} ARCHIVES )
+        #message( STATUS "   ${deplib} archives: ${archives}" )
+        get_target_property( kind ${deplib} KIND )
+        #message( STATUS "   ${deplib} kind: ${kind}" )
+
+        if( kind STREQUAL "LIBRARY" )
+            foreach( arc ${archives} )
+                get_target_property( cma ${arc} CMA )
+                get_target_property( cmxa ${arc} CMXA )
+                if( cma )
+                    #message( STATUS "   ${arc} cma: ${cma}" )
+                    list( APPEND cmanames ${cma} )
+                    list( APPEND cmatargets ${arc} )
+                endif()
+                if( cmxa )
+                    #message( STATUS "   ${arc} cmxa: ${cmxa}" )
+                    list( APPEND cmxanames ${cmxa} )
+                    list( APPEND cmxatargets ${arc} )
+                endif()
+            endforeach()
+        elseif( kind STREQUAL "CLIB" )
+            list( APPEND libnames ${archives} )
+            list( APPEND libtargets ${deplib} )
+        endif()
+
     endforeach()
     #message( STATUS "   cmanames: ${cmanames}" )
     #message( STATUS "   cmxanames: ${cmxanames}" )
+    #message( STATUS "   libnames: ${libnames}" )
     #message( STATUS "   cmatargets: ${cmatargets}" )
     #message( STATUS "   cmxatargets: ${cmxatargets}" )
+    #message( STATUS "   libtargets: ${libtargets}" )
+
+    unset( cclinkflags )
+    foreach( deplib ${OCAML_${target}_TARGET_TRANSLIBS} )
+        get_target_property( kind ${deplib} KIND )
+        #message( STATUS "*** ${deplib} kind: ${kind}" )
+        if( kind STREQUAL "CLIB" )
+            get_target_property( objdir ${deplib} OBJECT_DIRECTORY )
+            #message( STATUS "*** ${deplib} objdir: ${objdir}" )
+            list( APPEND cclinkflags -ccopt -L${objdir} )
+        endif()
+    endforeach()
+    #message( STATUS "   cclinkflags: ${cclinkflags}" )
 
     # {{{2 bytecode exe
     set( exeoutput "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir/${target}" )
     add_custom_command( OUTPUT ${exeoutput}
         COMMAND ${CMAKE_OCAML_COMPILER}
+            -custom
+            -linkpkg
             -o ${exeoutput}
             ${OCAML_${target}_OCAMLCOPTS}
             ${package_flags}
             ${include_flags}
+            ${cclinkflags}
             ${cmanames}
-            -linkpkg
             ${cmonames}
         
         DEPENDS ${cmonames} ${cmanames}
@@ -916,11 +961,12 @@ macro( add_ocaml_c_library target )
     #message( STATUS "add_ocaml_c_library( ${target} )" )
 
     ocaml_parse_arguments( OCAML_${target}
-        "SOURCES"
+        "SOURCES;CLIBRARIES"
         ""
         ${ARGN}
         )
     #message( STATUS "   OCAML_${target}_SOURCES:     ${OCAML_${target}_SOURCES}" )
+    #message( STATUS "   OCAML_${target}_CLIBRARIES:  ${OCAML_${target}_CLIBRARIES}" )
 
     unset( OCAML_${target}_OBJ_TARGETS )
     foreach( rs ${OCAML_${target}_SOURCES} )
@@ -935,6 +981,35 @@ macro( add_ocaml_c_library target )
     endforeach()
     #message( STATUS "   OCAML_${target}_OBJS:        ${OCAML_${target}_OBJS}" )
 
+    #set( output_a ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir/lib${target}.a )
+    #set( output_dll ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir/dll${target}.so )
+    #set( output "${output_a};${output_dll}" )
+    #add_custom_command( OUTPUT ${output}
+    #    COMMAND ocamlmklib -oc ${target}
+    #        ${OCAML_${target}_OBJS}
+    #    DEPENDS ${OCAML_${target}_OBJS}
+    #    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir
+    #    COMMENT "Building OCaml C lib ${target}"
+    #    )
+    #add_custom_target( ocaml.${target} ALL DEPENDS ${output} )
+    #set_target_properties( ocaml.${target} PROPERTIES
+    #    KIND "CLIB"
+    #    LINK_TARGETS "${target};${OCAML_${target}_CLIBRARIES}"
+    #    SOURCE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    #    OBJECT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir
+    #    LIBRARIES ""
+    #    PACKAGES ""
+    #    OCAMLCOPTS ""
+    #    TARGET_DEPLIBS ""
+    #    TARGET_TRANSLIBS ""
+    #    TARGET_TRANSPKGS ""
+    #    INCLUDE_DIRS ""
+    #    LINK_DIRS ""
+    #    REAL_SRCS ""
+    #    OBJ_TARGET "${OCAML_${target}_OBJ_TARGETS}"
+    #    ARCHIVES "${output}"
+    #    )
+
     set( output_a ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir/lib${target}.a )
     set( output "${output_a}" )
     add_custom_command( OUTPUT ${output}
@@ -946,9 +1021,10 @@ macro( add_ocaml_c_library target )
         )
     add_custom_target( ocaml.${target} ALL DEPENDS ${output} )
     set_target_properties( ocaml.${target} PROPERTIES
+        KIND "CLIB"
+        LINK_TARGETS "${target};${OCAML_${target}_CLIBRARIES}"
         SOURCE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         OBJECT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir
-        KIND "CLIB"
         LIBRARIES ""
         PACKAGES ""
         OCAMLCOPTS ""
