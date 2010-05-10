@@ -642,6 +642,7 @@ macro( ocaml_install_library pkg lib )
     #message( STATUS "       obj_target: ${obj_target}" )
     get_target_property( archives ocaml.${lib} ARCHIVES )
     #message( STATUS "       archives: ${archives}" )
+
     unset( files )
     foreach( tgt ${obj_target} )
         get_target_property( cmi ${tgt} CMI )
@@ -662,7 +663,24 @@ macro( ocaml_install_library pkg lib )
         )
 endmacro()
 
-# {{{1 install_ocaml_packag
+# {{{1 ocaml_install_c_library
+# ToDo: It seems silly to install the C source files, but maybe that should be
+# done since all the ML sources are installed.
+macro( ocaml_install_c_library pkg lib )
+    #message( STATUS "       package: ${pkg}" )
+    #message( STATUS "       library: ${lib}" )
+    get_target_property( archives ocaml.${lib} ARCHIVES )
+    #message( STATUS "       archives: ${archives}" )
+    
+    set( files ${archives} )
+
+    install(
+        FILES ${files}
+        DESTINATION ${OCAML_INSTALL_${pkg}_DESTINATION}
+        )
+endmacro()
+
+# {{{1 install_ocaml_package
 macro( install_ocaml_package pkg )
     #message( STATUS "install_ocaml_package( ${pkg} )" )
 
@@ -682,6 +700,8 @@ macro( install_ocaml_package pkg )
         get_target_property( kind ocaml.${lib} KIND )
         if( kind STREQUAL "LIBRARY" )
             ocaml_install_library( ${pkg} ${lib} )
+        elseif( kind STREQUAL "CLIB" )
+            ocaml_install_c_library( ${pkg} ${lib} )
         else()
             #message( SEND_ERROR "Attempting to install non-library ${lib} as a package" )
         endif()
@@ -924,12 +944,11 @@ macro( add_ocaml_c_library target )
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         COMMENT "Building OCaml C lib lib${target}.a"
         )
-    add_custom_target( ocaml.${target} DEPENDS ${output} )
+    add_custom_target( ocaml.${target} ALL DEPENDS ${output} )
     set_target_properties( ocaml.${target} PROPERTIES
         SOURCE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        OBJECT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir"
+        OBJECT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir
         KIND "CLIB"
-        SOURCES "${OCAML_${target}_SOURCES}"
         LIBRARIES ""
         PACKAGES ""
         OCAMLCOPTS ""
