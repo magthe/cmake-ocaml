@@ -202,9 +202,7 @@ macro( ocaml_set_real_srcs target )
                 list( APPEND srcfiles "${CMAKE_CURRENT_SOURCE_DIR}/${src}.mli")
             endif()
             if( NOT srcfiles )
-                message( SEND_ERROR
-                    "Can't find source files for ${src}."
-                    )
+                message( SEND_ERROR "Can't find source files for ${src}.")
             endif()
         endif()
 
@@ -492,7 +490,7 @@ macro( ocaml_add_archives target )
     unset( cmxnames )
     unset( objnames )
     foreach( tgtobj ${OCAML_${target}_OBJ_TARGETS} )
-        message( STATUS "   looking up objects for ${tgtobj}" )
+        #message( STATUS "   looking up objects for ${tgtobj}" )
         get_target_property( kind ${tgtobj} KIND )
         get_target_property( cmo ${tgtobj} CMO )
         get_target_property( cmx ${tgtobj} CMX )
@@ -503,9 +501,9 @@ macro( ocaml_add_archives target )
             list( APPEND objnames ${obj} )
         endif()
     endforeach()
-    message( STATUS "   ${target} archive cmos: ${cmonames}" )
-    message( STATUS "   ${target} archive cmxs: ${cmxnames}" )
-    message( STATUS "   ${target} archive objs: ${objnames}" )
+    #message( STATUS "   ${target} archive cmos: ${cmonames}" )
+    #message( STATUS "   ${target} archive cmxs: ${cmxnames}" )
+    #message( STATUS "   ${target} archive objs: ${objnames}" )
 
     # {{{2 set up package flags
     unset( package_flags )
@@ -517,7 +515,7 @@ macro( ocaml_add_archives target )
     foreach( lib ${OCAML_${target}_TARGET_TRANSLIBS} )
         get_target_property( kind ${lib} KIND )
         if( kind STREQUAL "CLIB" )
-            message( STATUS "   clib: ${lib}" )
+            #message( STATUS "   clib: ${lib}" )
         endif()
     endforeach()
 
@@ -568,45 +566,45 @@ endmacro()
 
 # {{{1 add_ocaml_library
 macro( add_ocaml_library target )
-    message( STATUS "add_ocaml_library( ${target} )" )
+    #message( STATUS "add_ocaml_library( ${target} )" )
 
     ocaml_parse_arguments( OCAML_${target}
         "SOURCES;LIBRARIES;PACKAGES;OCAMLCOPTS"
         ""
         ${ARGN}
         )
-    message( STATUS "   OCAML_${target}_SOURCES:          ${OCAML_${target}_SOURCES}" )
-    message( STATUS "   OCAML_${target}_LIBRARIES:        ${OCAML_${target}_LIBRARIES}" )
-    message( STATUS "   OCAML_${target}_PACKAGES:         ${OCAML_${target}_PACKAGES}" )
-    message( STATUS "   OCAML_${target}_OCAMLCOPTS:       ${OCAML_${target}_OCAMLCOPTS}" )
+    #message( STATUS "   OCAML_${target}_SOURCES:          ${OCAML_${target}_SOURCES}" )
+    #message( STATUS "   OCAML_${target}_LIBRARIES:        ${OCAML_${target}_LIBRARIES}" )
+    #message( STATUS "   OCAML_${target}_PACKAGES:         ${OCAML_${target}_PACKAGES}" )
+    #message( STATUS "   OCAML_${target}_OCAMLCOPTS:       ${OCAML_${target}_OCAMLCOPTS}" )
 
     ocaml_set_target_deplibs( ${target} )
-    message( STATUS "   OCAML_${target}_TARGET_DEPLIBS:   ${OCAML_${target}_TARGET_DEPLIBS}" )
+    #message( STATUS "   OCAML_${target}_TARGET_DEPLIBS:   ${OCAML_${target}_TARGET_DEPLIBS}" )
 
     ocaml_set_target_translibs( ${target} )
-    message( STATUS "   OCAML_${target}_TARGET_TRANSLIBS: ${OCAML_${target}_TARGET_TRANSLIBS}" )
+    #message( STATUS "   OCAML_${target}_TARGET_TRANSLIBS: ${OCAML_${target}_TARGET_TRANSLIBS}" )
 
     ocaml_set_target_transpkgs( ${target} )
-    message( STATUS "   OCAML_${target}_TARGET_TRANSPKGS: ${OCAML_${target}_TARGET_TRANSPKGS}" )
+    #message( STATUS "   OCAML_${target}_TARGET_TRANSPKGS: ${OCAML_${target}_TARGET_TRANSPKGS}" )
 
     ocaml_set_include_dirs( ${target} )
-    message( STATUS "   OCAML_${target}_INCLUDE_DIRS:     ${OCAML_${target}_INCLUDE_DIRS}" )
+    #message( STATUS "   OCAML_${target}_INCLUDE_DIRS:     ${OCAML_${target}_INCLUDE_DIRS}" )
 
     ocaml_set_link_dirs( ${target} )
-    message( STATUS "   OCAML_${target}_LINK_DIRS:        ${OCAML_${target}_LINK_DIRS}" )
+    #message( STATUS "   OCAML_${target}_LINK_DIRS:        ${OCAML_${target}_LINK_DIRS}" )
 
     # find the real sources for the target
     ocaml_set_real_srcs( ${target} )
-    message( STATUS "   OCAML_${target}_REAL_SRCS:        ${OCAML_${target}_REAL_SRCS}" )
+    #message( STATUS "   OCAML_${target}_REAL_SRCS:        ${OCAML_${target}_REAL_SRCS}" )
 
     # create all the object targets, and collect information needed for the
     # archives
     ocaml_add_objs( ${target} )
-    message( STATUS "   OCAML_${target}_OBJ_TARGETS:      ${OCAML_${target}_OBJ_TARGETS}" )
+    #message( STATUS "   OCAML_${target}_OBJ_TARGETS:      ${OCAML_${target}_OBJ_TARGETS}" )
 
     # create the target for the archive
     ocaml_add_archives( ${target} )
-    message( STATUS "   OCAML_${target}_ARCHIVES:         ${OCAML_${target}_ARCHIVES}" )
+    #message( STATUS "   OCAML_${target}_ARCHIVES:         ${OCAML_${target}_ARCHIVES}" )
 
     # create the top-level target for this library and add dependencies on each
     # object target
@@ -858,7 +856,7 @@ endmacro()
 
 # {{{1 ocaml_add_c_obj
 macro( ocaml_add_c_obj target srcfile )
-    message( STATUS "ocaml_add_c_obj( ${target} ${srcfile} )" )
+    #message( STATUS "ocaml_add_c_obj( ${target} ${srcfile} )" )
     get_filename_component( path ${srcfile} PATH )
     get_filename_component( name ${srcfile} NAME )
     get_filename_component( name_we ${srcfile} NAME_WE )
@@ -895,27 +893,27 @@ endmacro()
 #   add support for linking against C libraries
 #   re-evaluate whether to use ocamlmklib or straight ar
 macro( add_ocaml_c_library target )
-    message( STATUS "add_ocaml_c_library( ${target} )" )
+    #message( STATUS "add_ocaml_c_library( ${target} )" )
 
     ocaml_parse_arguments( OCAML_${target}
         "SOURCES"
         ""
         ${ARGN}
         )
-    message( STATUS "   OCAML_${target}_SOURCES:     ${OCAML_${target}_SOURCES}" )
+    #message( STATUS "   OCAML_${target}_SOURCES:     ${OCAML_${target}_SOURCES}" )
 
     unset( OCAML_${target}_OBJ_TARGETS )
     foreach( rs ${OCAML_${target}_SOURCES} )
         ocaml_add_c_obj( ${target} ${CMAKE_CURRENT_SOURCE_DIR}/${rs} )
     endforeach()
-    message( STATUS "   OCAML_${target}_OBJ_TARGETS: ${OCAML_${target}_OBJ_TARGETS}" )
+    #message( STATUS "   OCAML_${target}_OBJ_TARGETS: ${OCAML_${target}_OBJ_TARGETS}" )
 
     unset( OCAML_${target}_OBJS )
     foreach( tgt "${OCAML_${target}_OBJ_TARGETS}" )
         get_target_property( obj ${tgt} OBJ )
         list( APPEND OCAML_${target}_OBJS ${obj} )
     endforeach()
-    message( STATUS "   OCAML_${target}_OBJS:        ${OCAML_${target}_OBJS}" )
+    #message( STATUS "   OCAML_${target}_OBJS:        ${OCAML_${target}_OBJS}" )
 
     set( output_a ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir/lib${target}.a )
     set( output "${output_a}" )
