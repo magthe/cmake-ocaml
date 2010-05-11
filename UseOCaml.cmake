@@ -829,7 +829,9 @@ macro( ocaml_add_exe target )
         COMMENT "Building OCaml executable ${target}"
         )
     add_custom_target( ${target}.exe DEPENDS ${exeoutput} )
-    add_dependencies( ${target}.exe ${cmatargets} )
+    if( cmatargets )
+        add_dependencies( ${target}.exe ${cmatargets} )
+    endif()
     set_target_properties( ${target}.exe PROPERTIES
         OUTPUT ${exeoutput}
         )
@@ -851,7 +853,9 @@ macro( ocaml_add_exe target )
         COMMENT "Building OCaml executable ${target}_opt"
         )
     add_custom_target( ${target}.opt DEPENDS ${optoutput} )
-    add_dependencies( ${target}.opt ${cmxatargets} )
+    if( cmxatargets )
+        add_dependencies( ${target}.opt ${cmxatargets} )
+    endif()
     set_target_properties( ${target}.opt PROPERTIES
         OUTPUT ${optoutput}
         )
