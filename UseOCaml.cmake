@@ -512,6 +512,7 @@ macro( ocaml_add_archives target )
     endforeach()
 
     unset( clinkflags )
+    unset( carchives )
     foreach( lib ${OCAML_${target}_TARGET_TRANSLIBS} )
         get_target_property( kind ${lib} KIND )
         if( kind STREQUAL "CLIB" )
@@ -519,12 +520,15 @@ macro( ocaml_add_archives target )
             get_target_property( objdir ${lib} OBJECT_DIRECTORY )
             list( APPEND clinkflags -ccopt -L${objdir} )
             get_target_property( clibs ${lib} LINK_TARGETS )
+            get_target_property( carch ${lib} ARCHIVES )
+            list( APPEND carchives ${carch} )
             foreach( clib ${clibs} )
                 list( APPEND clinkflags -cclib -l${clib} )
             endforeach()
         endif()
     endforeach()
     #message( STATUS "   clinkflags: ${clinkflags}" )
+    #message( STATUS "   carchives: ${carchives}" )
 
     # {{{2 cma archive
     set( cmaoutput "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir/${target}.cma" )
@@ -536,7 +540,7 @@ macro( ocaml_add_archives target )
             ${cmonames}
             ${clinkflags}
 
-        DEPENDS ${objnames} ${cmonames}
+        DEPENDS ${objnames} ${cmonames} ${carchives}
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         COMMENT "Building OCaml library archive ${target}.cma"
         )
@@ -559,7 +563,7 @@ macro( ocaml_add_archives target )
             ${cmxnames}
             ${clinkflags}
 
-        DEPENDS ${objnames} ${cmxnames}
+        DEPENDS ${objnames} ${cmxnames} ${carchives}
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         COMMENT "Building OCaml library archive ${target}.cmxa"
         )
