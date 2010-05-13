@@ -816,22 +816,43 @@ macro( ocaml_add_exe target )
 
     # {{{2 bytecode exe
     set( exeoutput "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir/${target}" )
-    add_custom_command( OUTPUT ${exeoutput}
-        COMMAND ${CMAKE_OCAML_COMPILER}
-            -custom
-            -linkpkg
-            -o ${exeoutput}
-            ${OCAML_${target}_OCAMLCOPTS}
-            ${package_flags}
-            ${include_flags}
-            ${cclinkflags}
-            ${cmanames}
-            ${cmonames}
-        
-        DEPENDS ${cmonames} ${cmanames}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-        COMMENT "Building OCaml executable ${target}"
-        )
+    if( OCAML_${target}_RUN_POST_BUILD )
+        add_custom_command( OUTPUT ${exeoutput}
+            COMMAND ${CMAKE_OCAML_COMPILER}
+                -custom
+                -linkpkg
+                -o ${exeoutput}
+                ${OCAML_${target}_OCAMLCOPTS}
+                ${package_flags}
+                ${include_flags}
+                ${cclinkflags}
+                ${cmanames}
+                ${cmonames}
+
+            COMMAND ${exeoutput}
+            
+            DEPENDS ${cmonames} ${cmanames}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+            COMMENT "Building OCaml executable ${target}"
+            )
+    else()
+        add_custom_command( OUTPUT ${exeoutput}
+            COMMAND ${CMAKE_OCAML_COMPILER}
+                -custom
+                -linkpkg
+                -o ${exeoutput}
+                ${OCAML_${target}_OCAMLCOPTS}
+                ${package_flags}
+                ${include_flags}
+                ${cclinkflags}
+                ${cmanames}
+                ${cmonames}
+            
+            DEPENDS ${cmonames} ${cmanames}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+            COMMENT "Building OCaml executable ${target}"
+            )
+    endif()
     add_custom_target( ${target}.exe DEPENDS ${exeoutput} )
     if( cmatargets )
         add_dependencies( ${target}.exe ${cmatargets} )
@@ -842,20 +863,39 @@ macro( ocaml_add_exe target )
 
     # {{{2 optimised exe
     set( optoutput "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir/${target}_opt" )
-    add_custom_command( OUTPUT ${optoutput}
-        COMMAND ${CMAKE_OCAML_COMPILER_OPT}
-            -o ${optoutput}
-            ${OCAML_${target}_OCAMLCOPTS}
-            ${package_flags}
-            ${include_flags}
-            ${cmxanames}
-            -linkpkg
-            ${cmxnames}
+    if( OCAML_${target}_RUN_POST_BUILD )
+        add_custom_command( OUTPUT ${optoutput}
+            COMMAND ${CMAKE_OCAML_COMPILER_OPT}
+                -o ${optoutput}
+                ${OCAML_${target}_OCAMLCOPTS}
+                ${package_flags}
+                ${include_flags}
+                ${cmxanames}
+                -linkpkg
+                ${cmxnames}
 
-        DEPENDS ${cmxnames} ${cmxanames}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-        COMMENT "Building OCaml executable ${target}_opt"
-        )
+            COMMAND ${optoutput}
+
+            DEPENDS ${cmxnames} ${cmxanames}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+            COMMENT "Building OCaml executable ${target}_opt"
+            )
+    else()
+        add_custom_command( OUTPUT ${optoutput}
+            COMMAND ${CMAKE_OCAML_COMPILER_OPT}
+                -o ${optoutput}
+                ${OCAML_${target}_OCAMLCOPTS}
+                ${package_flags}
+                ${include_flags}
+                ${cmxanames}
+                -linkpkg
+                ${cmxnames}
+
+            DEPENDS ${cmxnames} ${cmxanames}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+            COMMENT "Building OCaml executable ${target}_opt"
+            )
+    endif()
     add_custom_target( ${target}.opt DEPENDS ${optoutput} )
     if( cmxatargets )
         add_dependencies( ${target}.opt ${cmxatargets} )
@@ -874,13 +914,14 @@ macro( add_ocaml_executable target )
 
     ocaml_parse_arguments( OCAML_${target}
         "SOURCES;LIBRARIES;PACKAGES;OCAMLCOPTS"
-        ""
+        "RUN_POST_BUILD"
         ${ARGN}
         )
     #message( STATUS "   OCAML_${target}_SOURCES:          ${OCAML_${target}_SOURCES}" )
     #message( STATUS "   OCAML_${target}_LIBRARIES:        ${OCAML_${target}_LIBRARIES}" )
     #message( STATUS "   OCAML_${target}_PACKAGES:         ${OCAML_${target}_PACKAGES}" )
     #message( STATUS "   OCAML_${target}_OCAMLCOPTS:       ${OCAML_${target}_OCAMLCOPTS}" )
+    #message( STATUS "   OCAML_${target}_RUN_POST_BUILD:   ${OCAML_${target}_RUN_POST_BUILD}" )
 
     ocaml_set_target_deplibs( ${target} )
     #message( STATUS "   OCAML_${target}_TARGET_DEPLIBS:   ${OCAML_${target}_TARGET_DEPLIBS}" )
