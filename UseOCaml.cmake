@@ -243,6 +243,7 @@ macro( ocaml_get_dependencies target srcfile dependencies )
     # get dependencies {{{2
     execute_process(
         COMMAND ${CMAKE_OCAML_DEP}
+            ${OCAML_${target}_OCAMLCOPTS}
             ${dep_arg} ${srcfile}
 
         COMMAND cut -d ":" -f 2-
