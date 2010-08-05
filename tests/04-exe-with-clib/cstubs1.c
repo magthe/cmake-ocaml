@@ -6,7 +6,7 @@
 #include <caml/custom.h>
 
 value
-cstubs_foo( value unit )
+cstubs1_foo( value unit )
 {
     CAMLparam1( unit );
     printf( "%s : %s\n", __FILE__, __FUNCTION__ );

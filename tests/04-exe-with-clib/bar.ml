@@ -1,2 +1,3 @@
 let _ =
-	Foo.foo ()
+	Foo.foo ();
+	Foo.bar ()

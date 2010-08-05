@@ -11,7 +11,7 @@ find_package( OCaml REQUIRED )
 include( UseOCaml )
 
 add_ocaml_c_library( cstubs
-	SOURCES cstubs.c
+	SOURCES cstubs1.c cstubs2.c
 	)
 
 add_ocaml_library( foo
