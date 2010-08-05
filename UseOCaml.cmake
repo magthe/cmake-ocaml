@@ -1025,7 +1025,7 @@ macro( add_ocaml_c_library target )
     #message( STATUS "   OCAML_${target}_OBJ_TARGETS: ${OCAML_${target}_OBJ_TARGETS}" )
 
     unset( OCAML_${target}_OBJS )
-    foreach( tgt "${OCAML_${target}_OBJ_TARGETS}" )
+    foreach( tgt ${OCAML_${target}_OBJ_TARGETS} )
         get_target_property( obj ${tgt} OBJ )
         list( APPEND OCAML_${target}_OBJS ${obj} )
     endforeach()
