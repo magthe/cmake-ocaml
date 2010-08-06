@@ -193,6 +193,28 @@ macro( ocaml_get_srcs_lex target srcfile srclist )
     list( APPEND ${srclist} ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir/${srcfile_we}.ml )
 endmacro()
 
+# {{{1 ocaml_get_srcs_yacc
+macro( ocaml_get_srcs_yacc target srcfile srclist )
+    get_filename_component( srcfile_we ${srcfile} NAME_WE )
+    file( MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir )
+    execute_process(
+        COMMAND ocamlyacc ${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}
+        OUTPUT_QUIET
+        )
+    file( RENAME
+        ${CMAKE_CURRENT_SOURCE_DIR}/${srcfile_we}.mli
+        ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir/${srcfile_we}.mli
+        )
+    file( RENAME
+        ${CMAKE_CURRENT_SOURCE_DIR}/${srcfile_we}.ml
+        ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir/${srcfile_we}.ml
+        )
+    list( APPEND ${srclist}
+        ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir/${srcfile_we}.mli
+        ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir/${srcfile_we}.ml
+        )
+endmacro()
+
 # {{{1 ocaml_set_real_srcs
 # collect real source files
 macro( ocaml_set_real_srcs target )
@@ -208,6 +230,8 @@ macro( ocaml_set_real_srcs target )
             list( APPEND srcfiles ${CMAKE_CURRENT_SOURCE_DIR}/${src} )
         elseif( ext STREQUAL ".mll" ) # entry is a lex file
             ocaml_get_srcs_lex( ${target} ${src} srcfiles )
+        elseif( ext STREQUAL ".mly" ) # entry is a yacc file
+            ocaml_get_srcs_yacc( ${target} ${src} srcfiles )
         else() # entry is neither, look in file system
             if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${src}.ml" )
                 list( APPEND srcfiles "${CMAKE_CURRENT_SOURCE_DIR}/${src}.ml")
@@ -217,6 +241,9 @@ macro( ocaml_set_real_srcs target )
             endif()
             if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${src}.mll" )
                 ocaml_get_srcs_lex( ${target} ${src}.mll srcfiles )
+            endif()
+            if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${src}.mly" )
+                ocaml_get_srcs_yacc( ${target} ${src}.mly srcfiles )
             endif()
             if( NOT srcfiles )
                 message( SEND_ERROR "Can't find source files for ${src} (${target}).")
