@@ -199,15 +199,13 @@ macro( ocaml_get_srcs_yacc target srcfile srclist )
     file( MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir )
     execute_process(
         COMMAND ocamlyacc ${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}
+        COMMAND mv
+            ${CMAKE_CURRENT_SOURCE_DIR}/${srcfile_we}.mli
+            ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir/${srcfile_we}.mli
+        COMMAND mv
+            ${CMAKE_CURRENT_SOURCE_DIR}/${srcfile_we}.ml
+            ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir/${srcfile_we}.ml
         OUTPUT_QUIET
-        )
-    file( RENAME
-        ${CMAKE_CURRENT_SOURCE_DIR}/${srcfile_we}.mli
-        ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir/${srcfile_we}.mli
-        )
-    file( RENAME
-        ${CMAKE_CURRENT_SOURCE_DIR}/${srcfile_we}.ml
-        ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir/${srcfile_we}.ml
         )
     list( APPEND ${srclist}
         ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir/${srcfile_we}.mli
