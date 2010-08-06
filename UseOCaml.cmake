@@ -181,6 +181,18 @@ macro( ocaml_set_link_dirs target )
     list( REMOVE_DUPLICATES OCAML_${target}_LINK_DIRS )
 endmacro()
 
+# {{{1 ocaml_get_srcs_lex
+macro( ocaml_get_srcs_lex target srcfile srclist )
+    get_filename_component( srcfile_we ${srcfile} NAME_WE )
+    file( MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir )
+    execute_process(
+        COMMAND ocamllex ${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}
+            -o ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir/${srcfile_we}.ml
+        OUTPUT_QUIET
+        )
+    list( APPEND ${srclist} ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir/${srcfile_we}.ml )
+endmacro()
+
 # {{{1 ocaml_set_real_srcs
 # collect real source files
 macro( ocaml_set_real_srcs target )
@@ -194,6 +206,8 @@ macro( ocaml_set_real_srcs target )
             list( APPEND srcfiles ${CMAKE_CURRENT_SOURCE_DIR}/${src} )
         elseif( ext STREQUAL ".mli" ) # entry is an interface
             list( APPEND srcfiles ${CMAKE_CURRENT_SOURCE_DIR}/${src} )
+        elseif( ext STREQUAL ".mll" ) # entry is a lex file
+            ocaml_get_srcs_lex( ${target} ${src} srcfiles )
         else() # entry is neither, look in file system
             if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${src}.ml" )
                 list( APPEND srcfiles "${CMAKE_CURRENT_SOURCE_DIR}/${src}.ml")
@@ -201,8 +215,11 @@ macro( ocaml_set_real_srcs target )
             if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${src}.mli" )
                 list( APPEND srcfiles "${CMAKE_CURRENT_SOURCE_DIR}/${src}.mli")
             endif()
+            if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${src}.mll" )
+                ocaml_get_srcs_lex( ${target} ${src}.mll srcfiles )
+            endif()
             if( NOT srcfiles )
-                message( SEND_ERROR "Can't find source files for ${src}.")
+                message( SEND_ERROR "Can't find source files for ${src} (${target}).")
             endif()
         endif()
 
