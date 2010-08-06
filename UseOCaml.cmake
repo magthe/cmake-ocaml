@@ -280,6 +280,7 @@ macro( ocaml_get_dependencies target srcfile dependencies )
     if( is_impl AND EXISTS "${srcpath}/${srcname_we}.mli" )
         set( has_intf TRUE )
     endif()
+    #message( STATUS " * Dependencies for ${srcfile}" )
     #message( STATUS "   ${srcfile} is_impl: ${is_impl}" )
     #message( STATUS "   ${srcfile} has_intf: ${has_intf}" )
     #message( STATUS "   ${srcfile} dep_arg: ${dep_arg}" )
@@ -295,26 +296,34 @@ macro( ocaml_get_dependencies target srcfile dependencies )
 
         COMMAND sed -e "s/^ *//g;s/ *$//g"
 
-        COMMAND tr "A-Z " "a-z;"
+        COMMAND tr " " ";"
 
-        OUTPUT_VARIABLE deps
+        OUTPUT_VARIABLE dep_mods
         RESULT_VARIABLE res
         OUTPUT_STRIP_TRAILING_WHITESPACE
         )
-    #message( STATUS "   ${srcfile} deps: ${deps}" )
+    #message( STATUS "   ${srcfile} dep_mods: ${dep_mods}" )
 
     # for each dependency, look for the real file {{{2
-    foreach( dep ${deps} )
-        #ocaml_trace( "       ${dep}" "" )
+    foreach( dep_mod ${dep_mods} )
         unset( location )
         set( dep_has_intf FALSE )
+
+        # convert the first character in the module name to lowercase, to allow
+        # comparison with source filename
+        execute_process(
+            COMMAND echo ${dep_mod}
+            COMMAND sed -e "s/\\([A-Z]\\)\\(.*\\)/\\l\\1\\2/"
+            OUTPUT_VARIABLE dep_fn
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            )
 
         # look among the current target's sources {{{3
         # iterate over the reported sources rather then the list of real
         # sources
         foreach( tgtsrc ${OCAML_${target}_SOURCES} )
             get_filename_component( tgtsrcname ${tgtsrc} NAME_WE ) # drop extension in case
-            if( dep STREQUAL ${tgtsrcname} )
+            if( dep_fn STREQUAL ${tgtsrcname} )
                 #message( STATUS "   Found ${tgtsrcname} among my own sources." )
                 set( location "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir" )
                 if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${tgtsrcname}.mli" )
@@ -330,7 +339,7 @@ macro( ocaml_get_dependencies target srcfile dependencies )
                 get_target_property( srcs ${tgtdep} REAL_SRCS )
                 foreach( depsrc ${srcs} )
                     get_filename_component( depsrcname ${depsrc} NAME_WE ) # drop extension in case
-                    if( dep STREQUAL ${depsrcname} )
+                    if( dep_fn STREQUAL ${depsrcname} )
                         #message( STATUS "   Found ${depsrcname} among the sources of ${tgtdep}." )
                         get_target_property( tgtdir ${tgtdep} OBJECT_DIRECTORY )
                         set( location "${tgtdir}" )
@@ -348,10 +357,10 @@ macro( ocaml_get_dependencies target srcfile dependencies )
         # look among the target's include dirs {{{3
         if( NOT location )
             foreach( idir ${OCAML_${target}_INCLUDE_DIRS} )
-                if( EXISTS "${idir}/${dep}.cmi" ) # check for .cmx too?
+                if( EXISTS "${idir}/${dep_fn}.cmi" ) # check for .cmx too?
                     set( location ${idir} )
                     set( dep_has_intf TRUE )
-                elseif( EXISTS "${idir}/${dep}.cmo" ) # check for .cmx too?
+                elseif( EXISTS "${idir}/${dep_fn}.cmo" ) # check for .cmx too?
                     set( location ${idir} )
                 endif()
             endforeach()
@@ -359,19 +368,19 @@ macro( ocaml_get_dependencies target srcfile dependencies )
 
         # add the dependency based on the findings {{{3
         if( location )
-            #message( STATUS "Should add the dependencies for ${dep} in ${location} (${dep_has_intf})" )
+            #message( STATUS "Should add the dependencies for ${dep} in ${location} (intf: ${dep_has_intf})" )
             if( dep_has_intf )
                 list( APPEND ${dependencies}
-                    "${location}/${dep}.cmi"
+                    "${location}/${dep_fn}.cmi"
                     )
             else()
                 list( APPEND ${dependencies}
-                    "${location}/${dep}.cmo"
-                    "${location}/${dep}.cmx"
+                    "${location}/${dep_fn}.cmo"
+                    "${location}/${dep_fn}.cmx"
                     )
             endif()
         else()
-            #message( STATUS "Can't find the location of the dependency ${dep} for ${target} (${srcfile})" )
+            #message( STATUS "Can't find the location of the dependency '${dep}' for '${target}' (${srcfile})" )
         endif()
     endforeach()
 
