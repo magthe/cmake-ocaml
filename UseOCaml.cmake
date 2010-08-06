@@ -402,7 +402,9 @@ macro( ocaml_add_impl_obj target srcfile )
     set( cmo_name "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir/${name_we}.cmo" )
     set( cmx_name "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir/${name_we}.cmx" )
     set( obj_name "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir/${name_we}.o" )
+    set( annot_name "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir/${name_we}.annot" )
     set( cmi_name "" )
+    file( RELATIVE_PATH annot_rel ${CMAKE_CURRENT_SOURCE_DIR} ${annot_name} )
 
     # set up list of outputs
     set( output ${cmo_name} ${cmx_name} ${obj_name} )
@@ -450,6 +452,8 @@ macro( ocaml_add_impl_obj target srcfile )
             ${OCAML_${target}_PF_${name}_OCAMLCOPTS}
             -o ${cmo_name}
             -c -impl ${srcfile}
+
+        COMMAND ${CMAKE_MODULE_PATH}/scripts/maybe_link ${annot_name} ${annot_rel} ${CMAKE_CURRENT_SOURCE_DIR}
 
         MAIN_DEPENDENCY ${srcfile}
         DEPENDS ${depends}
