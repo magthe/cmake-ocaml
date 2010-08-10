@@ -13,7 +13,7 @@ endif()
 
 # ocamlfind
 find_program( CMAKE_OCAML_OCAMLFIND
-    NAMES ocamlfind ocamlfind_opt
+    NAMES ocamlfind_opt ocamlfind
     HINTS ${OCAML_ROOT_DIR}
     )
 
@@ -30,14 +30,28 @@ if( CMAKE_OCAML_OCAMLFIND )
         )
 endif()
 
+# ocamllex & ocamlyacc
+find_program( CMAKE_OCAML_OCAMLLEX
+    NAMES ocamllex.opt ocamllex
+    HINTS ${OCAML_ROOT_DIR}
+    )
+find_program( CMAKE_OCAML_OCAMLYACC
+    NAMES ocamlyacc.opt ocamlyacc
+    HINTS ${OCAML_ROOT_DIR}
+    )
+
 find_package_handle_standard_args( OCAML "Could NOT find OCaml."
     CMAKE_OCAML_VERSION
     CMAKE_OCAML_STDLIB_PATH
     CMAKE_OCAML_OCAML
     CMAKE_OCAML_OCAMLFIND
+    CMAKE_OCAML_OCAMLLEX
+    CMAKE_OCAML_OCAMLYACC
     )
         
 mark_as_advanced(
     CMAKE_OCAML_OCAML
     CMAKE_OCAML_OCAMLFIND
+    CMAKE_OCAML_OCAMLLEX
+    CMAKE_OCAML_OCAMLYACC
     )

@@ -186,7 +186,7 @@ macro( ocaml_get_srcs_lex target srcfile srclist )
     get_filename_component( srcfile_we ${srcfile} NAME_WE )
     file( MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir )
     execute_process(
-        COMMAND ocamllex ${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}
+        COMMAND ${CMAKE_OCAML_OCAMLLEX} ${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}
             -o ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir/${srcfile_we}.ml
         OUTPUT_QUIET
         )
@@ -198,13 +198,20 @@ macro( ocaml_get_srcs_yacc target srcfile srclist )
     get_filename_component( srcfile_we ${srcfile} NAME_WE )
     file( MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir )
     execute_process(
-        COMMAND ocamlyacc ${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}
-        COMMAND mv
+        COMMAND ${CMAKE_OCAML_OCAMLYACC} ${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}
+
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
             ${CMAKE_CURRENT_SOURCE_DIR}/${srcfile_we}.mli
             ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir/${srcfile_we}.mli
-        COMMAND mv
+        COMMAND ${CMAKE_COMMAND} -E remove -f
+            ${CMAKE_CURRENT_SOURCE_DIR}/${srcfile_we}.mli
+
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
             ${CMAKE_CURRENT_SOURCE_DIR}/${srcfile_we}.ml
             ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir/${srcfile_we}.ml
+        COMMAND ${CMAKE_COMMAND} -E remove -f
+            ${CMAKE_CURRENT_SOURCE_DIR}/${srcfile_we}.ml
+
         OUTPUT_QUIET
         )
     list( APPEND ${srclist}
@@ -406,6 +413,15 @@ macro( ocaml_add_impl_obj target srcfile )
     set( cmi_name "" )
     file( RELATIVE_PATH annot_rel ${CMAKE_CURRENT_SOURCE_DIR} ${annot_name} )
 
+    # create a CMAKE script to do the (optional) linking to the .annot file
+    file( WRITE ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir/${name_we}.annot_move
+        "if( EXISTS ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir/${name_we}.annot )
+        execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
+            ${annot_rel} ${CMAKE_CURRENT_SOURCE_DIR}/${name_we}.annot
+            )
+        endif()"
+        )
+
     # set up list of outputs
     set( output ${cmo_name} ${cmx_name} ${obj_name} )
     if( NOT EXISTS "${path}/${name_we}.mli" )
@@ -453,7 +469,7 @@ macro( ocaml_add_impl_obj target srcfile )
             -o ${cmo_name}
             -c -impl ${srcfile}
 
-        COMMAND ${CMAKE_MODULE_PATH}/scripts/maybe_link ${annot_name} ${annot_rel} ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ocaml.${target}.dir/${name_we}.annot_move
 
         MAIN_DEPENDENCY ${srcfile}
         DEPENDS ${depends}
