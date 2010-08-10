@@ -1196,15 +1196,15 @@ macro( add_ocaml_file_options target )
         ""
         ${ARGN}
         )
-    message( STATUS "   sources: ${OCAML_${target}_PF_SOURCES}" )
-    message( STATUS "   ocamlopts: ${OCAML_${target}_PF_OCAMLOPTS}" )
-    message( STATUS "   ocamlopts: ${OCAML_${target}_PF_OCAMLCOPTS}" )
+    #message( STATUS "   sources: ${OCAML_${target}_PF_SOURCES}" )
+    #message( STATUS "   ocamlopts: ${OCAML_${target}_PF_OCAMLOPTS}" )
+    #message( STATUS "   ocamlopts: ${OCAML_${target}_PF_OCAMLCOPTS}" )
 
     foreach( src ${OCAML_${target}_PF_SOURCES} )
         set( OCAML_${target}_PF_${src}_OCAMLOPTS ${OCAML_${target}_PF_OCAMLOPTS} )
         set( OCAML_${target}_PF_${src}_OCAMLCOPTS ${OCAML_${target}_PF_OCAMLCOPTS} )
-        message( STATUS "   ${src} opts: ${OCAML_${target}_PF_${src}_OCAMLOPTS}" )
-        message( STATUS "   ${src} opts: ${OCAML_${target}_PF_${src}_OCAMLCOPTS}" )
+        #message( STATUS "   ${src} opts: ${OCAML_${target}_PF_${src}_OCAMLOPTS}" )
+        #message( STATUS "   ${src} opts: ${OCAML_${target}_PF_${src}_OCAMLCOPTS}" )
     endforeach()
 endmacro()
 
